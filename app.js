@@ -81,13 +81,8 @@ function init() {
     setupEventListeners();
     setMinDate();
     listenToFirestore(); // Habilitar escucha en tiempo real
-    
-    // Configurar fechas por defecto del filtro (mes actual)
-    const today = new Date();
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    filterInicio.value = firstDay.toISOString().split('T')[0];
-    filterFin.value = today.toISOString().split('T')[0];
+    // Ya no se aplican filtros por defecto para que el Admin pueda ver 
+    // todas las futuras reservas sin que la tabla se oculte prematuramente.
 }
 
 function setupEventListeners() {
