@@ -79,8 +79,32 @@ function init() {
     setupEventListeners();
     setMinDate();
     listenToFirestore(); // Habilitar escucha en tiempo real
+    migrarLocalStorage(); // Intenta migrar la vieja versión de base de datos
     // Ya no se aplican filtros por defecto para que el Admin pueda ver 
     // todas las futuras reservas sin que la tabla se oculte prematuramente.
+}
+
+// --- MIGRACIÓN DE DATOS LOCALES A FIREBASE ---
+async function migrarLocalStorage() {
+    const localStr = localStorage.getItem('reservas');
+    if (localStr) {
+        try {
+            const reservasLocales = JSON.parse(localStr);
+            if (Array.isArray(reservasLocales) && reservasLocales.length > 0) {
+                for (let res of reservasLocales) {
+                    delete res.id; // se borra para que Firebase le asigne uno único
+                    await addDoc(reservasRef, {
+                        ...res,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                localStorage.removeItem('reservas');
+                showToast("Tus antiguas reservas locales se guardaron en la Nube.");
+            }
+        } catch (e) {
+            console.error("Error migrando datos locales:", e);
+        }
+    }
 }
 
 function setupEventListeners() {
@@ -206,13 +230,13 @@ function getAvailableBlocks(dateString) {
     const isFriday = day === 5;
     const baseBlocks = isFriday ? [...BLOCKS_FRI] : [...BLOCKS_MON_THU];
     
-    const reservedOnDate = reservas
-        .filter(r => r.fecha === dateString)
-        .map(r => r.bloque);
+    const reservedData = reservas.filter(r => r.fecha === dateString);
+    const reservedBlocks = reservedData.map(r => r.bloque);
 
     return {
         base: baseBlocks,
-        reserved: reservedOnDate
+        reserved: reservedBlocks,
+        details: reservedData
     };
 }
 
@@ -239,7 +263,9 @@ function handleFechaChange() {
         
         if (blocksData.reserved.includes(b)) {
             option.disabled = true;
-            option.textContent += " (Ocupado)";
+            const resDetail = blocksData.details.find(r => r.bloque === b);
+            const profName = resDetail ? resDetail.profesor : "Otro Docente";
+            option.textContent = `${b} (Ocupado por ${profName})`;
         }
         
         fieldBloque.appendChild(option);
