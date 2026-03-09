@@ -1,3 +1,32 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { 
+    getFirestore, 
+    collection, 
+    getDocs, 
+    addDoc, 
+    deleteDoc, 
+    doc, 
+    updateDoc,
+    onSnapshot,
+    serverTimestamp,
+    query,
+    orderBy
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+// --- CONFIGURACIÓN FIREBASE FIRESTORE ---
+const firebaseConfig = {
+  projectId: "metrenco-reservas-app",
+  appId: "1:1080678458222:web:41c9785c702add6815577f",
+  storageBucket: "metrenco-reservas-app.firebasestorage.app",
+  apiKey: "AIzaSyBN17i1sN4hSOllyla4ASbzPWIgip552Jw",
+  authDomain: "metrenco-reservas-app.firebaseapp.com",
+  messagingSenderId: "1080678458222"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const reservasRef = collection(db, "reservas");
+
 // --- CONSTANTES ---
 const BLOCKS_MON_THU = [
     "08:30 a 10:00",
@@ -12,8 +41,7 @@ const BLOCKS_FRI = [
 ];
 
 // --- ESTADO INICIAL ---
-// Cargar reservas de localStorage o inicializar arr vacío
-let reservas = JSON.parse(localStorage.getItem('metrenco_reservas')) || [];
+let reservas = []; // Se poblará desde Firebase Firestore
 let isAdminLogged = false;
 
 // --- REFERENCIAS AL DOM ---
@@ -28,6 +56,7 @@ const navDocenteBtn = document.getElementById('navDocenteBtn');
 const reservaForm = document.getElementById('reservaForm');
 const fieldFecha = document.getElementById('fecha');
 const fieldBloque = document.getElementById('bloque');
+const btnSubmitReserva = document.getElementById('btnSubmitReserva'); // Button to toggle state
 
 // Auth Admin
 const loginForm = document.getElementById('loginForm');
@@ -42,6 +71,7 @@ const noReservasMsg = document.getElementById('noReservasMsg');
 function init() {
     setupEventListeners();
     setMinDate();
+    listenToFirestore(); // Habilitar escucha en tiempo real
 }
 
 function setupEventListeners() {
@@ -58,9 +88,29 @@ function setupEventListeners() {
     loginForm.addEventListener('submit', handleLogin);
 }
 
-// --- LOGICA CORE DE RESERVAS ---
-function saveReservas() {
-    localStorage.setItem('metrenco_reservas', JSON.stringify(reservas));
+// --- LOGICA CORE FIREBASE LECTURAS EN TIEMPO REAL ---
+function listenToFirestore() {
+    // Escucha todos los cambios y sincroniza el array `reservas` global
+    const q = query(reservasRef, orderBy("createdAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+        reservas = [];
+        snapshot.forEach((docSnap) => {
+            reservas.push({
+                id: docSnap.id,
+                ...docSnap.data()
+            });
+        });
+        
+        // Si estamos en la vista de Admin, refrezcamos la tabla con los nuevos datos
+        if (isAdminLogged) {
+            renderDashboard();
+        }
+        
+        // Si hay una fecha seleccionada en el formulario del docente, actualizamos su disponibilidad
+        if (fieldFecha.value) {
+            handleFechaChange();
+        }
+    });
 }
 
 function showToast(msg) {
@@ -70,7 +120,7 @@ function showToast(msg) {
     setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
-// --- CONTROLADOR DE VISTAS (Navegación tipo SPA) ---
+// --- CONTROLADOR DE VISTAS ---
 function showDocenteView() {
     viewDocente.classList.add('active');
     viewDocente.classList.remove('d-none');
@@ -82,7 +132,6 @@ function showDocenteView() {
     navAdminBtn.classList.remove('d-none');
     navDocenteBtn.classList.add('d-none');
     
-    // Si hay una fecha seleccionada, actualizar la vista de bloques disponibles
     if (fieldFecha.value) {
         handleFechaChange();
     }
@@ -122,20 +171,20 @@ function showAdminDashboard() {
 // --- LOGICA FORMULARIO DOCENTE ---
 function setMinDate() {
     const today = new Date();
-    // Previene seleccionar fechas en el pasado
-    const isoDate = today.toISOString().split('T')[0];
-    fieldFecha.setAttribute('min', isoDate);
+    const tzOffset = today.getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(today.getTime() - tzOffset)).toISOString().split('T')[0];
+    fieldFecha.setAttribute('min', localISOTime);
 }
 
 function isWeekend(dateString) {
-    const date = new Date(`${dateString}T00:00:00`); // Forzar evaluación local de la fecha
+    const date = new Date(`${dateString}T00:00:00`); 
     const day = date.getDay();
     return (day === 6 || day === 0);
 }
 
 function getDayOfWeek(dateString) {
     const date = new Date(`${dateString}T00:00:00`);
-    return date.getDay(); // 0: Dom, 1: Lun, ..., 5: Vie, 6: Sab
+    return date.getDay(); 
 }
 
 function getAvailableBlocks(dateString) {
@@ -143,7 +192,6 @@ function getAvailableBlocks(dateString) {
     const isFriday = day === 5;
     const baseBlocks = isFriday ? [...BLOCKS_FRI] : [...BLOCKS_MON_THU];
     
-    // Obtener bloques ya reservados para esa fecha específica
     const reservedOnDate = reservas
         .filter(r => r.fecha === dateString)
         .map(r => r.bloque);
@@ -157,13 +205,11 @@ function getAvailableBlocks(dateString) {
 function handleFechaChange() {
     const fecha = fieldFecha.value;
     
-    // Resetear opciones del bloque horario
     fieldBloque.innerHTML = '<option value="">Seleccione un bloque...</option>';
     fieldBloque.disabled = true;
 
     if (!fecha) return;
 
-    // Validación Lunes-Viernes
     if (isWeekend(fecha)) {
         alert("Atención: Solo se puede reservar la sala de lunes a viernes.");
         fieldFecha.value = "";
@@ -172,13 +218,11 @@ function handleFechaChange() {
 
     const blocksData = getAvailableBlocks(fecha);
     
-    // Llenar el <select> de bloques horarios iterando el array base
     blocksData.base.forEach(b => {
         const option = document.createElement('option');
         option.value = b;
         option.textContent = b;
         
-        // Deshabilitar bloque si ya está en uso
         if (blocksData.reserved.includes(b)) {
             option.disabled = true;
             option.textContent += " (Ocupado)";
@@ -189,7 +233,6 @@ function handleFechaChange() {
 
     fieldBloque.disabled = false;
 
-    // Bloqueo total si todos los bloques están llenos
     if (blocksData.reserved.length >= blocksData.base.length) {
         alert("Lo sentimos. Ese día ya tiene todos los bloques horarios reservados.");
         fieldFecha.value = "";
@@ -198,7 +241,7 @@ function handleFechaChange() {
     }
 }
 
-function handleReservaSubmit(e) {
+async function handleReservaSubmit(e) {
     e.preventDefault();
 
     const profesor = document.getElementById('profesor').value.trim();
@@ -208,7 +251,7 @@ function handleReservaSubmit(e) {
     const asignatura = document.getElementById('asignatura').value;
     const objetivo = document.getElementById('objetivo').value.trim();
 
-    // Doble validación por seguridad (por si alguien envió mientras se leía)
+    // Verificación sincrónica antes de envío
     const blocksData = getAvailableBlocks(fecha);
     if (blocksData.reserved.includes(bloque)) {
         alert("Error crítico: El bloque seleccionado acaba de ser reservado. Por favor elija otro.");
@@ -216,27 +259,35 @@ function handleReservaSubmit(e) {
         return;
     }
 
-    const nuevaReserva = {
-        id: Date.now().toString(),
-        profesor,
-        fecha,
-        bloque,
-        curso,
-        asignatura,
-        objetivo,
-        estado: 'Pendiente', 
-        createdAt: new Date().toISOString()
-    };
+    // Inhabilitar botón para evitar multi-clicks
+    btnSubmitReserva.disabled = true;
+    btnSubmitReserva.textContent = "Procesando...";
 
-    reservas.push(nuevaReserva);
-    saveReservas();
-    
-    showToast("¡Solicitud registrada con éxito!");
-    
-    // Limpiar campos form
-    reservaForm.reset();
-    fieldBloque.innerHTML = '<option value="">Seleccione una fecha primero...</option>';
-    fieldBloque.disabled = true;
+    try {
+        await addDoc(reservasRef, {
+            profesor,
+            fecha,
+            bloque,
+            curso,
+            asignatura,
+            objetivo,
+            estado: 'Pendiente', 
+            createdAt: serverTimestamp() // Guardado universal en la nube
+        });
+        
+        showToast("¡Solicitud enviada exitosamente a la nube!");
+        
+        // Limpiar
+        reservaForm.reset();
+        fieldBloque.innerHTML = '<option value="">Seleccione una fecha primero...</option>';
+        fieldBloque.disabled = true;
+    } catch(err) {
+        console.error("Error al guardar reserva: ", err);
+        alert("Ha ocurrido un error de conexión al enviar. Verifique su internet y reintente.");
+    } finally {
+        btnSubmitReserva.disabled = false;
+        btnSubmitReserva.textContent = "Enviar Solicitud";
+    }
 }
 
 // --- LÓGICA DE ADMINISTRADOR ---
@@ -245,7 +296,6 @@ function handleLogin(e) {
     const user = document.getElementById('username').value;
     const pass = document.getElementById('password').value;
 
-    // Hardcode validation
     if (user === 'admin' && pass === 'admin123') {
         isAdminLogged = true;
         loginForm.reset();
@@ -279,23 +329,19 @@ function renderDashboard() {
     noReservasMsg.classList.add('d-none');
     document.querySelector('.table-responsive').classList.remove('d-none');
 
-    // Ordenamiento: Por fecha (descendente de la más reciente a la más antigua)
     const sortedReservas = [...reservas].sort((a, b) => {
         const dateA = new Date(a.fecha);
         const dateB = new Date(b.fecha);
-        // Fecha más reciente primero
+        // Fecha de reserva futura primero o viceversa (según convenga)
         if (dateB.getTime() !== dateA.getTime()){
             return dateB - dateA; 
         }
-        // Y en el mismo día ordeno por bloque ascendente
         return a.bloque.localeCompare(b.bloque);
     });
 
-    // Renderizar registros en la tabla
     sortedReservas.forEach(res => {
         const tr = document.createElement('tr');
         
-        // Formatear Fecha DD/MM/YYYY
         const [year, month, day] = res.fecha.split('-');
         const niceDate = `${day}/${month}/${year}`;
         const sClass = getStatusClass(res.estado);
@@ -324,40 +370,40 @@ function renderDashboard() {
         reservasTbody.appendChild(tr);
     });
 
-    // Delegar eventos de estado
+    // Delegar estado Firestore
     document.querySelectorAll('.status-select').forEach(sel => {
-        sel.addEventListener('change', function() {
-            updateReservaStatus(this.dataset.id, this.value);
-            this.className = `status-select ${getStatusClass(this.value)}`; // actualiza clases visuales
+        sel.addEventListener('change', async function() {
+            const documentId = this.dataset.id;
+            const newStatus = this.value;
+            this.className = `status-select ${getStatusClass(newStatus)}`;
+            
+            try {
+                await updateDoc(doc(db, "reservas", documentId), {
+                    estado: newStatus
+                });
+            } catch(e) {
+                console.error("Error cambiando estado:", e);
+                alert("Error al guardar estado en la base de datos");
+            }
         });
     });
 
-    // Delegar eventos de borrado
+    // Delegar borrado Firestore
     document.querySelectorAll('.btn-danger-icon').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (confirm("¿Estás seguro que deseas eliminar esta reserva? Este bloque será librado inmediatamente para los docentes.")) {
-                deleteReserva(this.dataset.id);
+        btn.addEventListener('click', async function() {
+            if (confirm("¿Estás seguro que deseas eliminar esta reserva de la nube? Este bloque será liberado inmediatamente para los docentes en todo momento.")) {
+                try {
+                    await deleteDoc(doc(db, "reservas", this.dataset.id));
+                } catch(e) {
+                    console.error("Error borrando Doc:", e);
+                }
             }
         });
     });
 }
 
-function updateReservaStatus(id, newStatus) {
-    const idx = reservas.findIndex(r => r.id === id);
-    if (idx !== -1) {
-        reservas[idx].estado = newStatus;
-        saveReservas();
-    }
-}
-
-function deleteReserva(id) {
-    reservas = reservas.filter(r => r.id !== id);
-    saveReservas();
-    renderDashboard(); // Re-render table
-}
-
-// Previne brechas XSS
 function escapeHtml(unsafe) {
+    if(!unsafe) return "";
     return unsafe
          .replace(/&/g, "&amp;")
          .replace(/</g, "&lt;")
@@ -366,5 +412,4 @@ function escapeHtml(unsafe) {
          .replace(/'/g, "&#039;");
 }
 
-// Iniciar app
 init();
