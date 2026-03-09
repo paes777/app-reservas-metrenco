@@ -6,7 +6,7 @@
     <title>Reserva Sala de Informática - Escuela Metrenco</title>
     <!-- Modern font from Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=2026.1">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header class="main-header">
@@ -120,29 +120,6 @@
                     <button id="btnLogout" class="btn-outline-danger">Cerrar Sesión</button>
                 </div>
                 
-                <!-- Panel de Filtro y Exportación -->
-                <div class="export-panel">
-                    <div class="export-filters">
-                        <div class="form-group mb-0">
-                            <label for="filterYear">Filtrar descargas por Año:</label>
-                            <select id="filterYear">
-                                <option value="Todos">Lista Completa (Todos los Años)</option>
-                                <option value="2024">2024</option>
-                                <option value="2025">2025</option>
-                                <option value="2026" selected>2026</option>
-                                <option value="2027">2027</option>
-                                <option value="2028">2028</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="export-buttons">
-                        <span class="export-label">Descargar tabla:</span>
-                        <button id="btnExportPDF" class="btn-export pdf-btn" title="Descargar PDF">&#128196; PDF</button>
-                        <button id="btnExportExcel" class="btn-export excel-btn" title="Descargar Excel">&#128202; Excel</button>
-                        <button id="btnExportWord" class="btn-export word-btn" title="Descargar Word">&#128216; Word</button>
-                    </div>
-                </div>
-                
                 <div class="table-responsive">
                     <table class="reservas-table">
                         <thead>
@@ -173,14 +150,7 @@
     <!-- Notificación emergente Toast -->
     <div id="toast" class="toast">Gracias por solicitar la sala de informática</div>
 
-    <!-- CDNs de Librerías de Exportación -->
-    <!-- SheetJS (Excel) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- jsPDF y AutoTable (PDF) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-
     <!-- Firebase SDKs -->
-    <script type="module" src="app.js?v=2026.3"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

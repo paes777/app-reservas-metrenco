@@ -8,7 +8,9 @@ import {
     doc, 
     updateDoc,
     onSnapshot,
-    serverTimestamp
+    serverTimestamp,
+    query,
+    orderBy
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 // --- CONFIGURACIÓN FIREBASE FIRESTORE ---
@@ -61,12 +63,6 @@ const loginForm = document.getElementById('loginForm');
 const loginError = document.getElementById('loginError');
 const btnLogout = document.getElementById('btnLogout');
 
-// Export Admin
-const filterYear = document.getElementById('filterYear');
-const btnExportPDF = document.getElementById('btnExportPDF');
-const btnExportExcel = document.getElementById('btnExportExcel');
-const btnExportWord = document.getElementById('btnExportWord');
-
 // Dashboard Admin
 const reservasTbody = document.getElementById('reservasTbody');
 const noReservasMsg = document.getElementById('noReservasMsg');
@@ -76,32 +72,6 @@ function init() {
     setupEventListeners();
     setMinDate();
     listenToFirestore(); // Habilitar escucha en tiempo real
-    migrarLocalStorage(); // Intenta migrar la vieja versión de base de datos
-    // Ya no se aplican filtros por defecto para que el Admin pueda ver 
-    // todas las futuras reservas sin que la tabla se oculte prematuramente.
-}
-
-// --- MIGRACIÓN DE DATOS LOCALES A FIREBASE ---
-async function migrarLocalStorage() {
-    const localStr = localStorage.getItem('reservas');
-    if (localStr) {
-        try {
-            const reservasLocales = JSON.parse(localStr);
-            if (Array.isArray(reservasLocales) && reservasLocales.length > 0) {
-                for (let res of reservasLocales) {
-                    delete res.id; // se borra para que Firebase le asigne uno único
-                    await addDoc(reservasRef, {
-                        ...res,
-                        createdAt: serverTimestamp()
-                    });
-                }
-                localStorage.removeItem('reservas');
-                showToast("Tus antiguas reservas locales se guardaron en la Nube.");
-            }
-        } catch (e) {
-            console.error("Error migrando datos locales:", e);
-        }
-    }
 }
 
 function setupEventListeners() {
@@ -116,17 +86,13 @@ function setupEventListeners() {
 
     // Eventos Admin Login
     loginForm.addEventListener('submit', handleLogin);
-
-    // Eventos Panel Exportación Admin
-    btnExportPDF.addEventListener('click', exportarPDF);
-    btnExportExcel.addEventListener('click', exportarExcel);
-    btnExportWord.addEventListener('click', exportarWord);
 }
 
 // --- LOGICA CORE FIREBASE LECTURAS EN TIEMPO REAL ---
 function listenToFirestore() {
-    // Escucha todos los cambios y sincroniza el array `reservas` global sin ocultar nada
-    onSnapshot(reservasRef, (snapshot) => {
+    // Escucha todos los cambios y sincroniza el array `reservas` global
+    const q = query(reservasRef, orderBy("createdAt", "desc"));
+    onSnapshot(q, (snapshot) => {
         reservas = [];
         snapshot.forEach((docSnap) => {
             reservas.push({
@@ -226,13 +192,13 @@ function getAvailableBlocks(dateString) {
     const isFriday = day === 5;
     const baseBlocks = isFriday ? [...BLOCKS_FRI] : [...BLOCKS_MON_THU];
     
-    const reservedData = reservas.filter(r => r.fecha === dateString);
-    const reservedBlocks = reservedData.map(r => r.bloque);
+    const reservedOnDate = reservas
+        .filter(r => r.fecha === dateString)
+        .map(r => r.bloque);
 
     return {
         base: baseBlocks,
-        reserved: reservedBlocks,
-        details: reservedData
+        reserved: reservedOnDate
     };
 }
 
@@ -259,9 +225,7 @@ function handleFechaChange() {
         
         if (blocksData.reserved.includes(b)) {
             option.disabled = true;
-            const resDetail = blocksData.details.find(r => r.bloque === b);
-            const profName = resDetail ? resDetail.profesor : "Otro Docente";
-            option.textContent = `${b} (Ocupado por ${profName})`;
+            option.textContent += " (Ocupado)";
         }
         
         fieldBloque.appendChild(option);
@@ -270,8 +234,10 @@ function handleFechaChange() {
     fieldBloque.disabled = false;
 
     if (blocksData.reserved.length >= blocksData.base.length) {
-        alert("Atención: Ese día ya tiene todos los bloques horarios reservados. Puede revisar el listado de los docentes que ocuparon la sala en el selector de bloques.");
-        // No borramos las opciones, el usuario podrá expandir el selector y leer los nombres.
+        alert("Lo sentimos. Ese día ya tiene todos los bloques horarios reservados.");
+        fieldFecha.value = "";
+        fieldBloque.innerHTML = '<option value="">Día completamente ocupado...</option>';
+        fieldBloque.disabled = true;
     }
 }
 
@@ -351,39 +317,10 @@ function getStatusClass(statusStr) {
     return '';
 }
 
-function getFilteredReservas() {
-    let filtradas = [...reservas];
-    
-    const year = filterYear.value;
-    if (year !== "Todos") {
-        // En "filtradas", r.fecha tiene formato "YYYY-MM-DD", verificamos si empieza con "YYYY"
-        filtradas = filtradas.filter(r => r.fecha.startsWith(year));
-    }
-
-    return filtradas.sort((a, b) => {
-        const dateA = new Date(a.fecha);
-        const dateB = new Date(b.fecha);
-        if (dateA.getTime() !== dateB.getTime()) {
-            return dateB - dateA; // Descendente por fecha
-        }
-        return a.bloque.localeCompare(b.bloque);
-    });
-}
-
 function renderDashboard() {
     reservasTbody.innerHTML = '';
     
-    // La TV siempre muestra todas las reservas ordenadas
-    const allReservasSorted = [...reservas].sort((a, b) => {
-        const dateA = new Date(a.fecha);
-        const dateB = new Date(b.fecha);
-        if (dateA.getTime() !== dateB.getTime()) {
-            return dateB - dateA;
-        }
-        return a.bloque.localeCompare(b.bloque);
-    });
-    
-    if (allReservasSorted.length === 0) {
+    if (reservas.length === 0) {
         noReservasMsg.classList.remove('d-none');
         document.querySelector('.table-responsive').classList.add('d-none');
         return;
@@ -392,7 +329,17 @@ function renderDashboard() {
     noReservasMsg.classList.add('d-none');
     document.querySelector('.table-responsive').classList.remove('d-none');
 
-    allReservasSorted.forEach(res => {
+    const sortedReservas = [...reservas].sort((a, b) => {
+        const dateA = new Date(a.fecha);
+        const dateB = new Date(b.fecha);
+        // Fecha de reserva futura primero o viceversa (según convenga)
+        if (dateB.getTime() !== dateA.getTime()){
+            return dateB - dateA; 
+        }
+        return a.bloque.localeCompare(b.bloque);
+    });
+
+    sortedReservas.forEach(res => {
         const tr = document.createElement('tr');
         
         const [year, month, day] = res.fecha.split('-');
@@ -455,118 +402,14 @@ function renderDashboard() {
     });
 }
 
-// --- LOGICA DE EXPORTACIÓN ---
-function formatDataForExport() {
-    const data = getFilteredReservas();
-    return data.map(r => {
-        const [year, month, day] = r.fecha.split('-');
-        return [
-            `${day}/${month}/${year}`,
-            r.bloque,
-            r.profesor,
-            r.curso,
-            r.asignatura,
-            r.objetivo,
-            r.estado
-        ];
-    });
-}
-
-function exportarPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('landscape'); // Horizontal para que quepa bien
-    
-    doc.text("Reporte de Reservas - Escuela Metrenco", 14, 15);
-    
-    let subTitle = "Lista Completa - Todos los años";
-    if(filterYear.value !== "Todos") {
-        subTitle = `Año filtrado: ${filterYear.value}`;
-    }
-    doc.setFontSize(10);
-    doc.text(subTitle, 14, 22);
-
-    const tableData = formatDataForExport();
-    
-    if(tableData.length === 0) {
-        alert("No hay datos para exportar en este rango de fechas.");
-        return;
-    }
-
-    doc.autoTable({
-        startY: 28,
-        head: [['Fecha', 'Bloque', 'Profesor(a)', 'Curso', 'Asignatura', 'Objetivo', 'Estado']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: { fillColor: [10, 102, 194] },
-        styles: { fontSize: 8 }
-    });
-
-    doc.save(`Reservas_Metrenco_${Date.now()}.pdf`);
-}
-
-function exportarExcel() {
-    const tableData = formatDataForExport();
-    if(tableData.length === 0) {
-        alert("No hay datos para exportar en este rango de fechas.");
-        return;
-    }
-    
-    // Agregar cabecera
-    tableData.unshift(['Fecha', 'Bloque', 'Profesor(a)', 'Curso', 'Asignatura', 'Objetivo', 'Estado']);
-    
-    const ws = XLSX.utils.aoa_to_sheet(tableData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Reservas");
-    
-    XLSX.writeFile(wb, `Reservas_Metrenco_${Date.now()}.xlsx`);
-}
-
-function exportarWord() {
-    const tableData = formatDataForExport();
-    if(tableData.length === 0) {
-        alert("No hay datos para exportar en este rango de fechas.");
-        return;
-    }
-
-    let htmlTable = `
-    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head><meta charset='utf-8'><title>Reporte Reservas</title></head>
-    <body>
-        <h2 style="font-family: sans-serif; color: #0a66c2;">Reporte de Reservas - Escuela Metrenco</h2>
-        <p style="font-family: sans-serif; color: #555;">Documento generado automáticamente.</p>
-        <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; font-family: sans-serif; width:100%;">
-            <thead>
-                <tr style="background-color: #0a66c2; color: white;">
-                    <th>Fecha</th><th>Bloque</th><th>Profesor(a)</th><th>Curso</th><th>Asignatura</th><th>Objetivo</th><th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>`;
-            
-    tableData.forEach(row => {
-        htmlTable += `<tr>
-            <td>${escapeHtml(row[0])}</td>
-            <td>${escapeHtml(row[1])}</td>
-            <td>${escapeHtml(row[2])}</td>
-            <td>${escapeHtml(row[3])}</td>
-            <td>${escapeHtml(row[4])}</td>
-            <td>${escapeHtml(row[5])}</td>
-            <td>${escapeHtml(row[6])}</td>
-        </tr>`;
-    });
-    
-    htmlTable += `</tbody></table></body></html>`;
-
-    const blob = new Blob(['\ufeff', htmlTable], {
-        type: 'application/msword'
-    });
-    
-    // Crear un enlace temporal para descargar
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `Reservas_Metrenco_${Date.now()}.doc`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+function escapeHtml(unsafe) {
+    if(!unsafe) return "";
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
 }
 
 init();
