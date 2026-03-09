@@ -8,9 +8,7 @@ import {
     doc, 
     updateDoc,
     onSnapshot,
-    serverTimestamp,
-    query,
-    orderBy
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 // --- CONFIGURACIÓN FIREBASE FIRESTORE ---
@@ -127,9 +125,8 @@ function setupEventListeners() {
 
 // --- LOGICA CORE FIREBASE LECTURAS EN TIEMPO REAL ---
 function listenToFirestore() {
-    // Escucha todos los cambios y sincroniza el array `reservas` global
-    const q = query(reservasRef, orderBy("createdAt", "desc"));
-    onSnapshot(q, (snapshot) => {
+    // Escucha todos los cambios y sincroniza el array `reservas` global sin ocultar nada
+    onSnapshot(reservasRef, (snapshot) => {
         reservas = [];
         snapshot.forEach((docSnap) => {
             reservas.push({
@@ -273,10 +270,8 @@ function handleFechaChange() {
     fieldBloque.disabled = false;
 
     if (blocksData.reserved.length >= blocksData.base.length) {
-        alert("Lo sentimos. Ese día ya tiene todos los bloques horarios reservados.");
-        fieldFecha.value = "";
-        fieldBloque.innerHTML = '<option value="">Día completamente ocupado...</option>';
-        fieldBloque.disabled = true;
+        alert("Atención: Ese día ya tiene todos los bloques horarios reservados. Puede revisar el listado de los docentes que ocuparon la sala en el selector de bloques.");
+        // No borramos las opciones, el usuario podrá expandir el selector y leer los nombres.
     }
 }
 
