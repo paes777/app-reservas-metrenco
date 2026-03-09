@@ -275,7 +275,7 @@ async function handleReservaSubmit(e) {
             createdAt: serverTimestamp() // Guardado universal en la nube
         });
         
-        showToast("¡Solicitud enviada exitosamente a la nube!");
+        showToast("Gracias por solicitar la sala de informática");
         
         // Limpiar
         reservaForm.reset();
