@@ -30,8 +30,8 @@ body {
 }
 
 /* Typography styles */
-h1 { font-size: 1.7rem; color: #fff; line-height: 1.2; font-weight: 700; margin-bottom: 0.2rem;}
-h2 { font-size: 1rem; color: #e2e8f0; font-weight: 400; }
+h1 { font-size: 1.7rem; color: #fff; line-height: 1.2; font-weight: 700; margin-bottom: 0.2rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+h2 { font-size: 1rem; color: #000; font-weight: 500; }
 h3 { font-size: 1.4rem; margin-bottom: 0.5rem; color: var(--primary-color); font-weight: 600;}
 .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
 
