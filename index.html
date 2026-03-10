@@ -6,7 +6,7 @@
     <title>Reserva Sala de Informática - Escuela Truf-Truf</title>
     <!-- Modern font from Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=3.1">
+    <link rel="stylesheet" href="styles.css?v=3.3">
 </head>
 <body>
     <header class="main-header">
@@ -41,7 +41,7 @@
                     </div>
                     <div class="form-group">
                         <label for="docentePassLogin">Contraseña</label>
-                        <input type="password" id="docentePassLogin" required>
+                        <input type="password" id="docentePassLogin" required pattern="[0-9]{6}" maxlength="6" title="La contraseña debe ser de exactamente 6 números">
                     </div>
                     <div id="docenteLoginError" class="error-msg d-none">Credenciales incorrectas</div>
                     <button type="submit" class="btn-primary" id="btnDocenteLogin">Ingresar</button>
@@ -60,8 +60,8 @@
                     </div>
                     <div class="form-group">
                         <label for="docentePassReg">Contraseña</label>
-                        <input type="password" id="docentePassReg" required minlength="6">
-                        <small class="help-text">Mínimo 6 caracteres.</small>
+                        <input type="password" id="docentePassReg" required pattern="[0-9]{6}" maxlength="6" title="La contraseña debe ser de exactamente 6 números">
+                        <small class="help-text">Debe ser de exactamente 6 números.</small>
                     </div>
                     <div id="docenteRegError" class="error-msg d-none">Error al registrar</div>
                     <button type="submit" class="btn-primary" id="btnDocenteReg">Crear Cuenta</button>
@@ -246,6 +246,6 @@
     <script src="jspdf.min.js"></script>
     <script src="autotable.min.js"></script>
     
-    <script type="module" src="app.js?v=3.2"></script>
+    <script type="module" src="app.js?v=3.3"></script>
 </body>
 </html>

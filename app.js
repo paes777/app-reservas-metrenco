@@ -283,6 +283,12 @@ async function handleDocenteRegister(e) {
     const user = document.getElementById('docenteUserReg').value.trim().toLowerCase();
     const pass = document.getElementById('docentePassReg').value;
     
+    if (!/^\d{6}$/.test(pass)) {
+        docenteRegError.textContent = "La contraseña debe ser de exactamente 6 números.";
+        docenteRegError.classList.remove('d-none');
+        return;
+    }
+
     const email = `${user}@truftruf.cl`;
 
     btn.disabled = true;
@@ -300,9 +306,13 @@ async function handleDocenteRegister(e) {
         docenteRegisterForm.reset();
     } catch (error) {
         console.error("Error registro:", error);
-        docenteRegError.textContent = error.code === 'auth/email-already-in-use' 
-            ? "Ese usuario ya existe." 
-            : "Hubo un error al registrarse. Revise los datos.";
+        if (error.code === 'auth/email-already-in-use') {
+            docenteRegError.textContent = "Ese usuario ya existe.";
+        } else if (error.code === 'auth/operation-not-allowed') {
+            docenteRegError.textContent = "Error: El inicio de sesión con Correo/Contraseña NO ha sido habilitado en la consola de Firebase.";
+        } else {
+            docenteRegError.textContent = `Error: ${error.message}`;
+        }
         docenteRegError.classList.remove('d-none');
     } finally {
         btn.disabled = false;
@@ -316,6 +326,12 @@ async function handleDocenteLogin(e) {
     const user = document.getElementById('docenteUserLogin').value.trim().toLowerCase();
     const pass = document.getElementById('docentePassLogin').value;
     
+    if (!/^\d{6}$/.test(pass)) {
+        docenteLoginError.textContent = "La contraseña debe ser de exactamente 6 números.";
+        docenteLoginError.classList.remove('d-none');
+        return;
+    }
+
     const email = `${user}@truftruf.cl`;
 
     btn.disabled = true;
@@ -328,7 +344,13 @@ async function handleDocenteLogin(e) {
         docenteLoginForm.reset();
     } catch (error) {
         console.error("Error login:", error);
-        docenteLoginError.textContent = "Usuario o contraseña incorrectos.";
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            docenteLoginError.textContent = "Usuario o contraseña incorrectos.";
+        } else if (error.code === 'auth/operation-not-allowed') {
+            docenteLoginError.textContent = "Error: La autenticación no está habilitada en la consola de Firebase.";
+        } else {
+            docenteLoginError.textContent = `Error: ${error.message}`;
+        }
         docenteLoginError.classList.remove('d-none');
     } finally {
         btn.disabled = false;
