@@ -676,6 +676,7 @@ function renderMyReservas() {
             <td>${niceDate}</td>
             <td>${res.bloque}</td>
             <td>${res.recurso || 'Sala de Informática'}</td>
+            <td>${res.curso}</td>
             <td>${res.asignatura}</td>
             <td>
                 <select class="status-select ${sClass}" data-id="${res.id}" style="width:100%;">
