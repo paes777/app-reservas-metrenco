@@ -495,6 +495,14 @@ async function handleReservaSubmit(e) {
 }
 
 // --- LOGICA MIS RESERVAS (DOCENTE) ---
+function isPastTime(fechaStr, bloqueStr) {
+    if (!fechaStr || !bloqueStr) return false;
+    const startTimeStr = bloqueStr.split(' a ')[0]; // Extrae "08:30"
+    const targetDate = new Date(`${fechaStr}T${startTimeStr}:00`);
+    const now = new Date();
+    return now >= targetDate;
+}
+
 function renderMyReservas() {
     myReservasTbody.innerHTML = '';
     
@@ -555,6 +563,15 @@ function renderMyReservas() {
             const newStatus = this.value;
             const resId = this.dataset.id;
             
+            // Validacion de tiempo
+            const reserva = reservas.find(r => r.id === resId);
+            if (newStatus !== 'Pendiente' && reserva && !isPastTime(reserva.fecha, reserva.bloque)) {
+                alert("Restricción: No puede marcar su asistencia (Asistió o No asistió) antes de que la clase haya comenzado.");
+                // Revert dropdown (Mantener estado anterior)
+                this.value = reserva.estado;
+                return;
+            }
+
             // UI Optimitics Update (Color)
             this.className = `status-select ${getStatusClass(newStatus)}`;
             
