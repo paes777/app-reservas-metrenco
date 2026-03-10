@@ -668,6 +668,10 @@ function renderMyReservas() {
         const niceDate = `${day}/${month}/${year}`;
         const sClass = getStatusClass(res.estado);
 
+        const isTablet = (res.recurso || '').startsWith('Tablets');
+        const optAsistio = isTablet ? 'Las utilizó' : 'Asistió';
+        const optNoAsistio = isTablet ? 'No utilizó el recurso' : 'No asistió';
+
         tr.innerHTML = `
             <td>${niceDate}</td>
             <td>${res.bloque}</td>
@@ -676,8 +680,8 @@ function renderMyReservas() {
             <td>
                 <select class="status-select ${sClass}" data-id="${res.id}" style="width:100%;">
                     <option value="Pendiente" ${res.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                    <option value="Asistió" ${res.estado === 'Asistió' ? 'selected' : ''}>Asistió</option>
-                    <option value="No asistió" ${res.estado === 'No asistió' ? 'selected' : ''}>No asistió</option>
+                    <option value="${optAsistio}" ${res.estado === optAsistio ? 'selected' : ''}>${optAsistio}</option>
+                    <option value="${optNoAsistio}" ${res.estado === optNoAsistio ? 'selected' : ''}>${optNoAsistio}</option>
                 </select>
             </td>
             <td>
@@ -756,8 +760,8 @@ function handleLogout() {
 
 function getStatusClass(statusStr) {
     if (statusStr === 'Pendiente') return 'status-Pendiente';
-    if (statusStr === 'Asistió') return 'status-Asistio';
-    if (statusStr === 'No asistió') return 'status-NoAsistio';
+    if (statusStr === 'Asistió' || statusStr === 'Las utilizó') return 'status-Asistio';
+    if (statusStr === 'No asistió' || statusStr === 'No utilizó el recurso') return 'status-NoAsistio';
     return '';
 }
 
@@ -809,6 +813,10 @@ function renderDashboard() {
         const niceDate = `${day}/${month}/${year}`;
         const sClass = getStatusClass(res.estado);
 
+        const isTablet = (res.recurso || '').startsWith('Tablets');
+        const optAsistio = isTablet ? 'Las utilizó' : 'Asistió';
+        const optNoAsistio = isTablet ? 'No utilizó el recurso' : 'No asistió';
+
         tr.innerHTML = `
             <td>${niceDate}</td>
             <td>${res.bloque}</td>
@@ -820,8 +828,8 @@ function renderDashboard() {
             <td>
                 <select class="status-select ${sClass}" data-id="${res.id}">
                     <option value="Pendiente" ${res.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                    <option value="Asistió" ${res.estado === 'Asistió' ? 'selected' : ''}>Asistió</option>
-                    <option value="No asistió" ${res.estado === 'No asistió' ? 'selected' : ''}>No asistió</option>
+                    <option value="${optAsistio}" ${res.estado === optAsistio ? 'selected' : ''}>${optAsistio}</option>
+                    <option value="${optNoAsistio}" ${res.estado === optNoAsistio ? 'selected' : ''}>${optNoAsistio}</option>
                 </select>
             </td>
             <td>
