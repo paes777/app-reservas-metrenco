@@ -546,6 +546,7 @@ async function handleReservaSubmit(e) {
 
     const bloquesElegidos = checkedBoxes.map(cb => cb.value);
     
+    const recurso = document.getElementById('recurso').value;
     const curso = document.getElementById('curso').value;
     const asignatura = document.getElementById('asignatura').value;
     const objetivo = document.getElementById('objetivo').value.trim();
@@ -570,6 +571,7 @@ async function handleReservaSubmit(e) {
             profesor,
             fecha,
             bloque: bloquesElegidos.join(' y '), // Unifica 2 bloques continuos en UNA Sola Cadena
+            recurso,
             curso,
             asignatura,
             objetivo,
@@ -642,6 +644,7 @@ function renderMyReservas() {
         tr.innerHTML = `
             <td>${niceDate}</td>
             <td>${res.bloque}</td>
+            <td>${res.recurso || 'Sala de Informática'}</td>
             <td>${res.asignatura}</td>
             <td>
                 <select class="status-select ${sClass}" data-id="${res.id}" style="width:100%;">
@@ -763,6 +766,7 @@ function renderDashboard() {
         tr.innerHTML = `
             <td>${niceDate}</td>
             <td>${res.bloque}</td>
+            <td>${res.recurso || 'Sala de Informática'}</td>
             <td><strong>${escapeHtml(res.profesor)}</strong></td>
             <td>${res.curso}</td>
             <td>${res.asignatura}</td>
@@ -873,7 +877,7 @@ function handleExportPDF() {
         doc.setTextColor(100);
         
         // Formatear Data para AutoTable
-        const tableColumn = ["Fecha", "Bloque", "Profesor", "Curso", "Asignatura", "Estado"];
+        const tableColumn = ["Fecha", "Bloque", "Recurso", "Profesor", "Curso", "Asignatura", "Estado"];
         const tableRows = [];
 
         filteredReservas.forEach(r => {
@@ -882,6 +886,7 @@ function handleExportPDF() {
             const rowData = [
                 niceDate,
                 r.bloque,
+                r.recurso || 'Sala de Informática',
                 r.profesor,
                 r.curso,
                 r.asignatura,

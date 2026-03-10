@@ -110,6 +110,16 @@
 
                     <div class="form-row">
                         <div class="form-group">
+                            <label for="recurso">Recurso a Solicitar</label>
+                            <select id="recurso" required>
+                                <option value="Sala de Informática">Sala de Informática</option>
+                                <option value="Tablets">Tablets</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
                             <label for="curso">Curso</label>
                             <select id="curso" required>
                                 <option value="">Seleccione un curso...</option>
@@ -161,6 +171,7 @@
                             <tr>
                                 <th>Fecha</th>
                                 <th>Bloque</th>
+                                <th>Recurso</th>
                                 <th>Asignatura</th>
                                 <th>Estado</th>
                                 <th>Acción</th>
@@ -222,6 +233,7 @@
                             <tr>
                                 <th>Fecha</th>
                                 <th>Bloque</th>
+                                <th>Recurso</th>
                                 <th>Profesor(a)</th>
                                 <th>Curso</th>
                                 <th>Asignatura</th>
@@ -251,6 +263,6 @@
     <script src="jspdf.min.js"></script>
     <script src="autotable.min.js"></script>
     
-    <script type="module" src="app.js?v=3.15"></script>
+    <script type="module" src="app.js?v=3.16"></script>
 </body>
 </html>
