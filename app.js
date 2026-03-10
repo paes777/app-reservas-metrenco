@@ -899,6 +899,17 @@ function handleExportPDF() {
         else if (start) titleContext = `Desde el ${start}`;
         else if (end) titleContext = `Hasta el ${end}`;
     }
+
+    // Filtro adicional por Recurso (Heredado de UI)
+    if (filterAdminRecurso && filterAdminRecurso.value !== 'Todos') {
+        const recursoBuscado = filterAdminRecurso.value;
+        filteredReservas = filteredReservas.filter(r => {
+            const actual = r.recurso || 'Sala de Informática';
+            if (recursoBuscado === 'Tablets') return actual.startsWith('Tablets');
+            return actual === recursoBuscado;
+        });
+        titleContext += ` (${recursoBuscado})`;
+    }
     
     if (filteredReservas.length === 0) {
         alert("No hay reservas para el rango seleccionado.");
