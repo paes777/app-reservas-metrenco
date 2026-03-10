@@ -22,15 +22,71 @@
     </header>
 
     <main class="container">
-        <!-- VISTA DOCENTE -->
-        <section id="docenteView" class="view-section active">
-            <div class="card">
+        <!-- VISTA AUTENTICACIÓN DOCENTE -->
+        <section id="docenteAuthView" class="view-section active">
+            <div class="card login-card">
+                <h3>Acceso Docentes</h3>
+                <p class="subtitle">Inicie sesión o regístrese para solicitar la sala.</p>
+                
+                <div class="auth-tabs" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <button id="tabLogin" style="background: none; border: none; padding: 0.5rem; font-weight: 600; color: var(--primary-color); border-bottom: 2px solid var(--primary-color);">Iniciar Sesión</button>
+                    <button id="tabRegister" style="background: none; border: none; padding: 0.5rem; font-weight: 600; color: var(--text-muted);">Registrarse</button>
+                </div>
+
+                <!-- Formulario Login Docente -->
+                <form id="docenteLoginForm">
+                    <div class="form-group">
+                        <label for="docenteUserLogin">Usuario</label>
+                        <input type="text" id="docenteUserLogin" required placeholder="Ej. jperez">
+                    </div>
+                    <div class="form-group">
+                        <label for="docentePassLogin">Contraseña</label>
+                        <input type="password" id="docentePassLogin" required>
+                    </div>
+                    <div id="docenteLoginError" class="error-msg d-none">Credenciales incorrectas</div>
+                    <button type="submit" class="btn-primary" id="btnDocenteLogin">Ingresar</button>
+                </form>
+
+                <!-- Formulario Registro Docente -->
+                <form id="docenteRegisterForm" class="d-none">
+                    <div class="form-group">
+                        <label for="docenteNameReg">Nombre Completo</label>
+                        <input type="text" id="docenteNameReg" required placeholder="Ej. Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label for="docenteUserReg">Usuario</label>
+                        <input type="text" id="docenteUserReg" required placeholder="Ej. jperez">
+                        <small class="help-text">Use letras minúsculas sin espacios.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="docentePassReg">Contraseña</label>
+                        <input type="password" id="docentePassReg" required minlength="6">
+                        <small class="help-text">Mínimo 6 caracteres.</small>
+                    </div>
+                    <div id="docenteRegError" class="error-msg d-none">Error al registrar</div>
+                    <button type="submit" class="btn-primary" id="btnDocenteReg">Crear Cuenta</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- VISTA DOCENTE PRINCIPAL -->
+        <section id="docenteView" class="view-section d-none">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; background: var(--primary-color); padding: 1rem 1.5rem; border-radius: var(--radius); color: white;">
+                <div>
+                    <h3 style="color: white; margin-bottom: 0;">Bienvenido(a), <span id="lblTeacherName"></span></h3>
+                </div>
+                <button id="btnDocenteLogout" class="btn-outline">Cerrar Sesión</button>
+            </div>
+
+            <div class="card" style="margin-bottom: 2rem;">
                 <h3>Formulario de Solicitud</h3>
                 <p class="subtitle">Complete los datos para reservar la sala de informática.</p>
                 <form id="reservaForm">
                     <div class="form-group">
                         <label for="profesor">Nombre del Profesor(a)</label>
-                        <input type="text" id="profesor" required placeholder="Ej. Juan Pérez">
+                        <input type="text" id="profesor" required readonly style="background-color: #edf2f7; color: #4a5568; cursor: not-allowed;">
+                        <small class="help-text">Autocompletado con su usuario.</small>
                     </div>
                     
                     <div class="form-row">
@@ -89,6 +145,30 @@
 
                     <button type="submit" class="btn-primary" id="btnSubmitReserva">Enviar Solicitud</button>
                 </form>
+            </div>
+
+            <div class="card">
+                <h3>Mis Reservas Activas</h3>
+                <p class="subtitle">Gestione sus bloques horarios solicitados.</p>
+                <div class="table-responsive">
+                    <table class="reservas-table my-reservas-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Bloque</th>
+                                <th>Asignatura</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myReservasTbody">
+                            <!-- Filas de mis reservas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noMyReservasMsg" class="empty-state d-none">
+                    No has realizado ninguna solicitud aún.
+                </div>
             </div>
         </section>
 

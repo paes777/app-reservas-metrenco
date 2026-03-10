@@ -239,6 +239,16 @@ select.status-select {
     border: 1px dashed #cbd5e0;
 }
 
+/* Auth Tabs */
+.auth-tabs button {
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+.auth-tabs button:hover {
+    color: var(--primary-color) !important;
+}
+
 /* Utilities */
 .d-none { display: none !important; }
 .active { display: block; }
