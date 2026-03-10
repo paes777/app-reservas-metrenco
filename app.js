@@ -70,6 +70,10 @@ const bloquesContainer = document.getElementById('bloques-container');
 const fieldProfesor = document.getElementById('profesor');
 const btnSubmitReserva = document.getElementById('btnSubmitReserva');
 const lblTeacherName = document.getElementById('lblTeacherName');
+const recursoSelect = document.getElementById('recurso');
+const tabletQuantityContainer = document.getElementById('tabletQuantityContainer');
+const tabletQuantityInput = document.getElementById('tabletQuantity');
+const filterAdminRecurso = document.getElementById('filterAdminRecurso');
 const btnDocenteLogout = document.getElementById('btnDocenteLogout');
 const myReservasTbody = document.getElementById('myReservasTbody');
 const noMyReservasMsg = document.getElementById('noMyReservasMsg');
@@ -129,6 +133,24 @@ function setupEventListeners() {
         else showDocenteAuth();
     });
     btnLogout.addEventListener('click', handleLogout);
+
+    // Eventos Recurso Tech
+    if (recursoSelect) {
+        recursoSelect.addEventListener('change', () => {
+            if (recursoSelect.value === 'Tablets') {
+                tabletQuantityContainer.classList.remove('d-none');
+                tabletQuantityInput.required = true;
+            } else {
+                tabletQuantityContainer.classList.add('d-none');
+                tabletQuantityInput.required = false;
+                tabletQuantityInput.value = '';
+            }
+        });
+    }
+
+    if (filterAdminRecurso) {
+        filterAdminRecurso.addEventListener('change', renderDashboard);
+    }
 
     // Eventos Docente Auth (Navegación TABS)
     tabLogin.addEventListener('click', () => {
@@ -546,7 +568,12 @@ async function handleReservaSubmit(e) {
 
     const bloquesElegidos = checkedBoxes.map(cb => cb.value);
     
-    const recurso = document.getElementById('recurso').value;
+    let recurso = document.getElementById('recurso').value;
+    if (recurso === 'Tablets') {
+        const qty = tabletQuantityInput.value;
+        if (qty) recurso = `Tablets (${qty})`;
+    }
+    
     const curso = document.getElementById('curso').value;
     const asignatura = document.getElementById('asignatura').value;
     const objetivo = document.getElementById('objetivo').value.trim();
@@ -746,7 +773,26 @@ function renderDashboard() {
     noReservasMsg.classList.add('d-none');
     document.querySelector('.table-responsive').classList.remove('d-none');
 
-    const sortedReservas = [...reservas].sort((a, b) => {
+    // Filtrado por Recurso
+    let reservasFiltradas = reservas;
+    if (filterAdminRecurso && filterAdminRecurso.value !== 'Todos') {
+        const selected = filterAdminRecurso.value;
+        reservasFiltradas = reservasFiltradas.filter(r => {
+            const actualRecurso = r.recurso || 'Sala de Informática';
+            if (selected === 'Tablets') {
+                return actualRecurso.startsWith('Tablets');
+            }
+            return actualRecurso === selected;
+        });
+    }
+
+    if (reservasFiltradas.length === 0) {
+        noReservasMsg.classList.remove('d-none');
+        document.querySelector('.table-responsive').classList.add('d-none');
+        return;
+    }
+
+    const sortedReservas = [...reservasFiltradas].sort((a, b) => {
         const dateA = new Date(a.fecha);
         const dateB = new Date(b.fecha);
         // Fecha de reserva futura primero o viceversa (según convenga)

@@ -14,7 +14,7 @@
             <img src="logo.png" alt="Logo Escuela Truf-Truf" class="logo">
             <div>
                 <h1>Escuela Truf-Truf</h1>
-                <h2>Reserva Sala de Informática</h2>
+                <h2>Reserva Recurso Tecnológico</h2>
             </div>
         </div>
         <button id="navAdminBtn" class="btn-outline">Acceso Administrador</button>
@@ -116,6 +116,10 @@
                                 <option value="Tablets">Tablets</option>
                             </select>
                         </div>
+                        <div class="form-group d-none" id="tabletQuantityContainer">
+                            <label for="tabletQuantity">Cantidad de Tablets</label>
+                            <input type="number" id="tabletQuantity" min="1" max="18" placeholder="Ej. 15 (Máximo 18)">
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -215,6 +219,13 @@
                     <h3 style="margin: 0;">Gestión de Solicitudes</h3>
                     <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                            <label for="filterAdminRecurso" style="margin: 0; font-weight: 600;">Recurso:</label>
+                            <select id="filterAdminRecurso" style="padding: 0.4rem; border-radius: 4px; border: 1px solid #ccc;">
+                                <option value="Todos">Todos</option>
+                                <option value="Sala de Informática">Sala de Info.</option>
+                                <option value="Tablets">Tablets</option>
+                            </select>
+
                             <label for="exportFechaInicio" style="margin: 0; font-weight: 600;">Desde:</label>
                             <input type="date" id="exportFechaInicio" style="padding: 0.4rem; border-radius: 4px; border: 1px solid #ccc;">
                             
@@ -263,6 +274,6 @@
     <script src="jspdf.min.js"></script>
     <script src="autotable.min.js"></script>
     
-    <script type="module" src="app.js?v=3.16"></script>
+    <script type="module" src="app.js?v=3.17"></script>
 </body>
 </html>
