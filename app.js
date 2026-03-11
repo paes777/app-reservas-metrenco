@@ -482,10 +482,15 @@ function getAvailableBlocks(dateString) {
 
 function handleFechaChange() {
     const fecha = fieldFecha.value;
-    
-    bloquesContainer.innerHTML = '<em>Seleccione una fecha primero...</em>';
 
-    if (!fecha) return;
+    // Guardar los bloques que el usuario (docente) tenía seleccionados antes del redibujado
+    const previouslyChecked = Array.from(document.querySelectorAll('input[name="bloqueSelection"]:checked')).map(cb => cb.value);
+
+    // Si aún no hay fecha escogida, mostrar placeholder
+    if (!fecha) {
+        bloquesContainer.innerHTML = '<em>Seleccione una fecha primero...</em>';
+        return;
+    }
 
     if (isWeekend(fecha)) {
         alert("Atención: Solo se puede reservar la sala de lunes a viernes.");
@@ -521,6 +526,11 @@ function handleFechaChange() {
             label.textContent += ` (Ocupado por ${info.profesor})`;
             label.style.color = '#a0aec0';
             label.style.textDecoration = 'line-through';
+        } else {
+            // Si el bloque sigue libre, y estaba marcado antes del redibujado reactivo, volver a marcarlo.
+            if (previouslyChecked.includes(b)) {
+                checkbox.checked = true;
+            }
         }
         
         checkbox.addEventListener('change', handleCheckboxChange);
@@ -616,7 +626,8 @@ async function handleReservaSubmit(e) {
             fieldProfesor.value = currentDocenteUser.displayName || currentDocenteUser.email.split('@')[0];
         }
         
-        bloquesContainer.innerHTML = '<em>Seleccione una fecha primero...</em>';
+        // Redibujar bloques instantáneamente en lugar de vaciar la tabla
+        handleFechaChange();
     } catch(err) {
         console.error("Error al guardar reserva: ", err);
         alert("Ha ocurrido un error de conexión al enviar. Verifique su internet y reintente.");
