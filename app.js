@@ -470,7 +470,6 @@ async function handleDocenteRegister(e) {
             }
         }
 
-        const q = query(docentesRef, where("usuario", "==", user)); // En registro verificamos contra escrito exacto preferentemente, o escaneamos
         let usernameExists = false;
         const scanSnapshot = await getDocs(docentesRef);
         scanSnapshot.forEach(docSnap => {
