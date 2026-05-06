@@ -11,7 +11,8 @@ git add .
 git commit -m "Actualizacion automatica: %date% %time%"
 
 :: Empujar a GitHub (lo cual actualiza la web oficial)
-git push origin master
+git push origin master --force
+firebase deploy
 
 echo.
 echo ===================================================
