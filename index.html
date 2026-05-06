@@ -293,6 +293,31 @@
                 </form>
             </div>
 
+            <!-- NUEVO: CREAR NUEVO DOCENTE (ADMIN) -->
+            <div class="card" style="margin-bottom: 2rem; border-left: 4px solid var(--primary-color);">
+                <h3 style="color: var(--primary-color);">Crear Nuevo Usuario Docente</h3>
+                <p class="subtitle">Registre un nuevo profesor para que pueda realizar reservas.</p>
+                <form id="adminCreateDocenteForm">
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 2;">
+                            <label for="adminNewDocenteName">Nombre Completo</label>
+                            <input type="text" id="adminNewDocenteName" required placeholder="Ej. María González">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="adminNewDocenteUser">Usuario</label>
+                            <input type="text" id="adminNewDocenteUser" required placeholder="Ej. mgonzalez">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="adminNewDocentePass">Contraseña</label>
+                            <input type="text" id="adminNewDocentePass" required placeholder="Ej. 1234" maxlength="8">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="btnAdminCreateDocente">Crear Usuario</button>
+                    <div id="docenteCreateSuccess" class="success-msg d-none" style="color: #15803d; margin-top: 10px; font-weight: 600;">¡Usuario creado exitosamente!</div>
+                    <div id="docenteCreateError" class="error-msg d-none" style="margin-top: 10px;"></div>
+                </form>
+            </div>
+
             <div class="card dashboard-card">
                 <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
                     <h3 style="margin: 0;">Gestión de Solicitudes</h3>

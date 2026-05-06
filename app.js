@@ -123,6 +123,14 @@ const adminSelectPassProfesor = document.getElementById('adminSelectPassProfesor
 const adminNewPassword = document.getElementById('adminNewPassword');
 const passChangeSuccess = document.getElementById('passChangeSuccess');
 
+// Formulario Crear Nuevo Docente Admin
+const adminCreateDocenteForm = document.getElementById('adminCreateDocenteForm');
+const adminNewDocenteName = document.getElementById('adminNewDocenteName');
+const adminNewDocenteUser = document.getElementById('adminNewDocenteUser');
+const adminNewDocentePass = document.getElementById('adminNewDocentePass');
+const docenteCreateSuccess = document.getElementById('docenteCreateSuccess');
+const docenteCreateError = document.getElementById('docenteCreateError');
+
 // --- INICIALIZACIÓN ---
 function init() {
     setupEventListeners();
@@ -226,6 +234,7 @@ function setupEventListeners() {
     // Eventos Admin Login
     loginForm.addEventListener('submit', handleLogin);
     if (adminPasswordForm) adminPasswordForm.addEventListener('submit', handleAdminPasswordChange);
+    if (adminCreateDocenteForm) adminCreateDocenteForm.addEventListener('submit', handleAdminCreateDocente);
 
     // Eventos Formulario Admin Asignación
     if (adminFecha) adminFecha.addEventListener('change', handleAdminFechaChange);
@@ -761,6 +770,64 @@ async function handleAdminPasswordChange(e) {
     } finally {
         btn.disabled = false;
         btn.textContent = "Actualizar Contraseña";
+    }
+}
+
+async function handleAdminCreateDocente(e) {
+    e.preventDefault();
+    const nombre = adminNewDocenteName.value.trim();
+    const user = adminNewDocenteUser.value.trim();
+    const pass = adminNewDocentePass.value.trim();
+    
+    if (!nombre || !user || !pass) {
+        alert("Complete todos los campos");
+        return;
+    }
+
+    const safeUser = user.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (safeUser.length === 0) {
+        alert("El usuario debe contener al menos una letra o número válido.");
+        return;
+    }
+
+    const btn = document.getElementById('btnAdminCreateDocente');
+    btn.disabled = true;
+    btn.textContent = "Creando...";
+    docenteCreateError.classList.add('d-none');
+    
+    try {
+        // Verificar si el usuario ya existe
+        let usernameExists = false;
+        const scanSnapshot = await getDocs(docentesRef);
+        scanSnapshot.forEach(docSnap => {
+             const data = docSnap.data();
+             const dbSafeUser = (data.usuario || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+             if (dbSafeUser === safeUser) usernameExists = true;
+        });
+
+        if (usernameExists) {
+            docenteCreateError.textContent = "El nombre de usuario ya está registrado.";
+            docenteCreateError.classList.remove('d-none');
+            return;
+        }
+
+        await addDoc(docentesRef, {
+            nombre: nombre,
+            usuario: user, 
+            password: pass
+        });
+        
+        docenteCreateSuccess.classList.remove('d-none');
+        adminCreateDocenteForm.reset();
+        
+        setTimeout(() => docenteCreateSuccess.classList.add('d-none'), 4000);
+    } catch(err) {
+        console.error(err);
+        docenteCreateError.textContent = "Ocurrió un error al crear el usuario.";
+        docenteCreateError.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Crear Usuario";
     }
 }
 
